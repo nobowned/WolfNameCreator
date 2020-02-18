@@ -14,7 +14,8 @@ namespace WolfNameCreator
         public const int WolfWhite = 7;
         public const int EscapeCharacter = '^';
 
-        public static Color DefaultColor = Color.White;
+        public static int DefaultWolfColor = WolfWhite;
+        public static Color DefaultRealColor = WolfColorToRealColor(DefaultWolfColor);
 
         public static Color WolfColorToRealColor(int wolfColor)
         {

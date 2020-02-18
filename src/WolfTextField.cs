@@ -485,7 +485,7 @@ namespace WolfNameCreator
 
         void AddNormalCharacter(int codepoint)
         {
-            AddCharacter(codepoint, WolfColorUtil.DefaultColor);
+            AddCharacter(codepoint, WolfColorUtil.DefaultRealColor);
         }
 
         void AddCharacter(int codepoint, Color color)
@@ -540,7 +540,7 @@ namespace WolfNameCreator
 
         void UpdateCharacterColors()
         {
-            Color CurrentColor = WolfColorUtil.DefaultColor;
+            Color CurrentColor = WolfColorUtil.DefaultRealColor;
             for (int i = 0; i < CharsToDraw.Count; ++i)
             {
                 var Character = CharsToDraw[i];
@@ -554,7 +554,7 @@ namespace WolfNameCreator
                     }
                     else
                     {
-                        CurrentColor = WolfColorUtil.DefaultColor;
+                        CurrentColor = WolfColorUtil.DefaultRealColor;
                     }
                 }
                 Character.Color = CurrentColor;

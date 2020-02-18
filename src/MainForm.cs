@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Windows.Forms;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace WolfNameCreator
 {
@@ -89,7 +90,7 @@ namespace WolfNameCreator
                     Height = WolfNameHelper.ImageHeight,
                     Parent = this,
                     BackColor = WolfColorUtil.WolfColorToRealColor(ColorIndex),
-                    BorderStyle = BorderStyle.FixedSingle
+                    BorderPen = new Pen(Color.Black)
                 });
             }
 
@@ -191,10 +192,14 @@ namespace WolfNameCreator
                 return;
             }
 
+            Cursor = Cursors.WaitCursor;
+
             var Lines = File.ReadAllLines(ConfigFilePath).ToList();
             Lines.RemoveAll(line => line.Contains(NameKey));
             Lines.Add($"set name \"{TextField.GetText()}\"");
             File.WriteAllLines(ConfigFilePath, Lines.ToArray());
+
+            Task.Delay(100).ContinueWith(t => Cursor = Cursors.Default, scheduler: TaskScheduler.FromCurrentSynchronizationContext());
         }
 
         private void SaveNewToolStripMenuItem_Click(object sender, EventArgs e)

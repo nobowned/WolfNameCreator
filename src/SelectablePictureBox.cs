@@ -8,22 +8,40 @@ namespace WolfNameCreator
     {
         int Codepoint;
         bool Clicked;
-        Timer HighlightTimer;
+        Timer SelectedTimer;
         Action<int> MouseDownEvent;
+        Pen PreviousBorderPen;
+        Rectangle? _borderBounds;
+        Rectangle BorderBounds
+        {
+            get
+            {
+                if (_borderBounds == null)
+                {
+                    _borderBounds = new Rectangle(0, 0, Width - 1, Height - 1);
+                }
+
+                return _borderBounds.Value;
+            }
+        }
+
+        public Pen BorderPen;
+
+        readonly static Pen HighlightBorderPen = new Pen(Color.DeepSkyBlue);
 
         public SelectablePictureBox(int codepoint, Action<int> mouseDown)
         {
             SetStyle(ControlStyles.Selectable, true);
             TabStop = true;
             Clicked = false;
-            HighlightTimer = new Timer();
-            HighlightTimer.Tick += (sender, e) =>
+            SelectedTimer = new Timer();
+            SelectedTimer.Tick += (sender, e) =>
             {
                 Clicked = false;
-                HighlightTimer.Stop();
+                SelectedTimer.Stop();
                 Refresh();
             };
-            HighlightTimer.Interval = 100;
+            SelectedTimer.Interval = 100;
             MouseDownEvent = mouseDown;
             Codepoint = codepoint;
         }
@@ -42,11 +60,30 @@ namespace WolfNameCreator
             if (Clicked)
             {
                 e.Graphics.Clear(Color.Cornsilk);
-                if (!HighlightTimer.Enabled)
+                if (!SelectedTimer.Enabled)
                 {
-                    HighlightTimer.Start();
+                    SelectedTimer.Start();
                 }
             }
+            if (BorderPen != null)
+            {
+                e.Graphics.DrawRectangle(BorderPen, BorderBounds);
+            }
+        }
+
+        protected override void OnMouseEnter(EventArgs e)
+        {
+            base.OnMouseEnter(e);
+            PreviousBorderPen = BorderPen;
+            BorderPen = HighlightBorderPen;
+            Refresh();
+        }
+
+        protected override void OnMouseLeave(EventArgs e)
+        {
+            base.OnMouseLeave(e);
+            BorderPen = PreviousBorderPen;
+            Refresh();
         }
     }
 }

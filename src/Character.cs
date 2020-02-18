@@ -10,7 +10,7 @@ namespace WolfNameCreator
 
         public Character()
         {
-            _color = WolfColorUtil.DefaultColor;
+            _color = WolfColorUtil.DefaultRealColor;
         }
 
         public Image Img;
