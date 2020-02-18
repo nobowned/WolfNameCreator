@@ -490,6 +490,11 @@ namespace WolfNameCreator
 
         void AddCharacter(int codepoint, Color color)
         {
+            if (codepoint > WolfNameHelper.MaxCodepoint)
+            {
+                return;
+            }
+
             AddCharacter(new Character
             {
                 Img = WolfFont[codepoint],
