@@ -33,7 +33,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>wnc.ico</ApplicationIcon>
+    <ApplicationIcon>wnc_3X5_icon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -96,6 +96,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="wnc.ico" />
+    <Content Include="wnc_3X5_icon.ico" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\wolfchars.png" />
