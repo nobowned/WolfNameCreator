@@ -3,38 +3,42 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 using System.IO;
+using System.Linq;
 
 namespace WolfNameCreator
 {
     public partial class MainForm : Form
     {
+        const string WolfConfigExtension = ".cfg";
+        const string NameKey = " name ";
+
         List<SelectablePictureBox> PictureBoxes;
         List<Image> WolfFont;
         WolfTextField TextField;
+        string ConfigFilePath;
 
-        public MainForm()
+        public MainForm(string[] args)
         {
             InitializeComponent();
             InitializeSelectablePictureBoxes();
 
-            TextField = new WolfTextField(this, new Point(12, 50), 35, WolfFont);
+            TextField = new WolfTextField(this, new Point(12, MenuStrip.Height + 50), 35, WolfFont);
             TextField.Parent = this;
             Controls.Add(TextField);
 
             Width = TextField.Width + 40;
-            Height = 120;
-            CopyButton.Location = new Point(Width - CopyButton.Width - 28, 6);
-            SaveButton.Location = new Point(Width - CopyButton.Width - SaveButton.Width - 28, 6);
+            Height = 120 + MenuStrip.Height;
 
-            TextField.TabIndex = 0;
-            CopyButton.TabIndex = 1;
+            ParseArguments(args);
+
+            SaveToolStripMenuItem.Enabled = !string.IsNullOrEmpty(ConfigFilePath);
         }
 
         void InitializeSelectablePictureBoxes()
         {
             PictureBoxes = new List<SelectablePictureBox>();
             int LocationX = 12;
-            int LocationY = 12;
+            int LocationY = MenuStrip.Height + 12;
 
             // Initialize the special character picture boxes.
             // 0-32 are the control characters used to encode the special characters in RTCW.
@@ -59,7 +63,7 @@ namespace WolfNameCreator
             // Initialize the color picture boxes.
             // Codepoints 32-39 are reserved for the colors, they aren't really codepoints.
             LocationX = 12;
-            LocationY = 28;
+            LocationY = MenuStrip.Height + 28;
             ActuallyUsed = 0;
             for (int i = 32; i < 32 + 8; ++i)
             {
@@ -83,6 +87,50 @@ namespace WolfNameCreator
             }
         }
 
+        void ParseArguments(string[] args)
+        {
+            if (args.Length == 0 || string.IsNullOrEmpty(args[0]))
+            {
+                return;
+            }
+
+            var FirstArgument = args[0];
+            if (Path.GetExtension(FirstArgument) == WolfConfigExtension)
+            {
+                if (File.Exists(FirstArgument))
+                {
+                    var PlayerName = ParsePlayerNameFromConfigFile(FirstArgument);
+                    if (!string.IsNullOrEmpty(PlayerName))
+                    {
+                        ConfigFilePath = FirstArgument;
+                        TextField.SetText(PlayerName);
+                    }
+                }
+            }
+            else
+            {
+                TextField.SetText(FirstArgument);
+            }
+        }
+
+        string ParsePlayerNameFromConfigFile(string configFilePath)
+        {
+            var ConfigFileContents = File.ReadAllLines(configFilePath);
+            if (ConfigFileContents.Length == 0)
+            {
+                return null;
+            }
+
+            var SetNameLine = ConfigFileContents.FirstOrDefault(line => line.Contains(NameKey));
+            if (!string.IsNullOrEmpty(SetNameLine))
+            {
+                var Name = SetNameLine.Substring(SetNameLine.IndexOf(NameKey) + (NameKey.Length - 1)).Trim(' ', '\n', '\r', '"');
+                return Name;
+            }
+
+            return null;
+        }
+
         private void PicBox_MouseDown(int codepoint)
         {
             TextField.Focus();
@@ -99,28 +147,72 @@ namespace WolfNameCreator
             }
         }
 
-        private void CopyButton_Click(object sender, EventArgs e)
+        private void FileToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var Text = TextField.GetText();
-            Clipboard.SetText(string.IsNullOrEmpty(Text) ? " " : Text);
+            if (string.IsNullOrEmpty(ConfigFilePath) || !File.Exists(ConfigFilePath))
+            {
+                ConfigFilePath = null;
+                SaveToolStripMenuItem.Enabled = false;
+            }
         }
 
-        private void SaveButton_Click(object sender, EventArgs e)
+        private void OpenToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var FileDialog = new OpenFileDialog
+            {
+                RestoreDirectory = true,
+                CheckFileExists = true
+            };
+
+            using (FileDialog)
+            {
+                if (FileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    var PlayerName = ParsePlayerNameFromConfigFile(FileDialog.FileName);
+                    if (!string.IsNullOrEmpty(PlayerName))
+                    {
+                        TextField.SetText(PlayerName);
+                        ConfigFilePath = FileDialog.FileName;
+                        SaveToolStripMenuItem.Enabled = !string.IsNullOrEmpty(ConfigFilePath);
+                    }
+                }
+            }
+        }
+
+        private void SaveToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(ConfigFilePath) || !File.Exists(ConfigFilePath))
+            {
+                return;
+            }
+
+            var Lines = File.ReadAllLines(ConfigFilePath).ToList();
+            Lines.RemoveAll(line => line.Contains(NameKey));
+            Lines.Add($"set name \"{TextField.GetText()}\"");
+            File.WriteAllLines(ConfigFilePath, Lines.ToArray());
+        }
+
+        private void SaveNewToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var FileDialog = new SaveFileDialog
             {
                 RestoreDirectory = true,
                 AddExtension = true,
-                DefaultExt = ".cfg"
+                DefaultExt = WolfConfigExtension
             };
 
-            if (FileDialog.ShowDialog() == DialogResult.OK)
+            using (FileDialog)
             {
-                using (var Stream = FileDialog.OpenFile())
+                if (FileDialog.ShowDialog() == DialogResult.OK)
                 {
-                    using (var Writer = new StreamWriter(Stream))
+                    using (var Stream = FileDialog.OpenFile())
                     {
-                        Writer.WriteLine(string.Format("set name \"{0}\"", TextField.GetText()));
+                        using (var Writer = new StreamWriter(Stream))
+                        {
+                            Writer.WriteLine($"set name \"{TextField.GetText()}\"");
+                            ConfigFilePath = FileDialog.FileName;
+                            SaveToolStripMenuItem.Enabled = !string.IsNullOrEmpty(ConfigFilePath);
+                        }
                     }
                 }
             }
