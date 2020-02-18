@@ -67,8 +67,7 @@ namespace WolfNameCreator
             CursorTimer.Tick += (sender, e) =>
             {
                 DrawCursor = !DrawCursor;
-                Invalidate(new Rectangle(CursorPosition, new Size(15, 15)));
-                Update();
+                InvalidateCursor();
             };
             CursorTimer.Interval = 500;
             CursorTimer.Start();
@@ -139,7 +138,6 @@ namespace WolfNameCreator
                     GraphicsUnit.Pixel, Char.ImageAttributes);
             }
 
-            // TODO: Invalidate only the cursor.
             if (DrawCursor)
             {
                 e.Graphics.DrawRectangle(CursorPen, new Rectangle(CursorPosition, CursorSize));
@@ -148,7 +146,7 @@ namespace WolfNameCreator
 
         protected override void OnKeyDown(KeyEventArgs e)
         {
-            // ctrl + shift + z
+            // ctrl + shift + z (redo)
             if ((e.Modifiers & Keys.Control) == Keys.Control && (e.Modifiers & Keys.Shift) == Keys.Shift && e.KeyCode == Keys.Z)
             {
                 if (UndoneCommands.Count > 0)
@@ -158,7 +156,7 @@ namespace WolfNameCreator
                     ExecutedCommands.Push(Cmd);
                 }
             }
-            // ctrl + z
+            // ctrl + z (undo)
             else if (e.Modifiers == Keys.Control && e.KeyCode == Keys.Z)
             {
                 if (ExecutedCommands.Count > 0)
@@ -168,15 +166,29 @@ namespace WolfNameCreator
                     UndoneCommands.Push(Cmd);
                 }
             }
-            // ctrl + v
+            // ctrl + v (paste)
             else if (e.Modifiers == Keys.Control && e.KeyCode == Keys.V)
             {
                 PasteFromClipboard();
             }
-            // ctrl + s
+            // ctrl + s (save)
             else if (e.Modifiers == Keys.Control && e.KeyCode == Keys.S)
             {
                 OnCtrlSKeyed?.Invoke();
+            }
+            // ctrl + left (move cursor to end)
+            else if (e.Modifiers == Keys.Control && e.KeyCode == Keys.Left)
+            {
+                InvalidateCursor();
+                CursorPosition = StartingCursorPosition;
+                InvalidateCursor();
+            }
+            // ctrl + right (move cursor to beginning)
+            else if (e.Modifiers == Keys.Control && e.KeyCode == Keys.Right)
+            {
+                InvalidateCursor();
+                CursorPosition.X = CharsToDraw.Count * 16 + StartingCursorPosition.X;
+                InvalidateCursor();
             }
 
             base.OnKeyDown(e);
@@ -200,10 +212,9 @@ namespace WolfNameCreator
                     Position = CharsToDraw.Count;
                 }
 
-                Invalidate(new Rectangle(CursorPosition, new Size(15, 15)));
+                InvalidateCursor();
                 CursorPosition.X = Position * 16 + 2;
-                Invalidate(new Rectangle(CursorPosition, new Size(15, 15)));
-                Update();
+                InvalidateCursor();
             }
         }
 
@@ -229,7 +240,7 @@ namespace WolfNameCreator
             Invalidate(new Rectangle(0, 0, 1, Height));
             Invalidate(new Rectangle(Width - 2, 0, 1, Height));
             Invalidate(new Rectangle(0, Height - 2, Width, 1));
-            Invalidate(new Rectangle(CursorPosition, new Size(15, 15)));
+            Invalidate(new Rectangle(CursorPosition, WolfNameHelper.GetCodepointSize()));
             DrawCursor = false;
             Update();
         }
@@ -428,10 +439,9 @@ namespace WolfNameCreator
                 if (DestX / WolfNameHelper.ImageWidth <= CharsToDraw.Count &&
                     DestX > 0)
                 {
-                    Invalidate(new Rectangle(CursorPosition, WolfNameHelper.GetCodepointSize()));
+                    InvalidateCursor();
                     CursorPosition.X = DestX;
-                    Invalidate(new Rectangle(CursorPosition, WolfNameHelper.GetCodepointSize()));
-                    Update();
+                    InvalidateCursor();
                 }
 
                 return true;
@@ -564,6 +574,14 @@ namespace WolfNameCreator
             {
                 Invalidate(new Rectangle(CursorPosition, new Size(MaxLength * WolfNameHelper.ImageWidth, WolfNameHelper.ImageHeight)));
             }
+        }
+
+        void InvalidateCursor()
+        {
+            Invalidate(new Rectangle(CursorPosition, new Size(WolfNameHelper.ImageWidth, 2)));
+            Invalidate(new Rectangle(CursorPosition, new Size(2, WolfNameHelper.ImageHeight)));
+            Invalidate(new Rectangle(new Point(CursorPosition.X + CursorSize.Width, CursorPosition.Y), new Size(2, WolfNameHelper.ImageHeight)));
+            Invalidate(new Rectangle(new Point(CursorPosition.X, CursorPosition.Y + CursorSize.Height), new Size(WolfNameHelper.ImageWidth, 2)));
         }
 
         int GetCharacterIndexFromCursorPosition()
