@@ -95,7 +95,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="wnc.ico" />
     <Content Include="wnc_3X5_icon.ico" />
   </ItemGroup>
   <ItemGroup>

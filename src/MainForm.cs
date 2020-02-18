@@ -5,6 +5,7 @@ using System.Windows.Forms;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using WolfNameCreator.Properties;
 
 namespace WolfNameCreator
 {
@@ -225,6 +226,21 @@ namespace WolfNameCreator
                         }
                     }
                 }
+            }
+        }
+
+        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            Settings.Default.FormLocation = Location;
+            Settings.Default.FormLocationSaved = true;
+            Settings.Default.Save();
+        }
+
+        private void MainForm_Load(object sender, EventArgs e)
+        {
+            if (Settings.Default.FormLocationSaved)
+            {
+                Location = Settings.Default.FormLocation;
             }
         }
     }
