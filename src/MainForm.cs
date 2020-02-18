@@ -22,8 +22,21 @@ namespace WolfNameCreator
             InitializeComponent();
             InitializeSelectablePictureBoxes();
 
-            TextField = new WolfTextField(this, new Point(12, MenuStrip.Height + 50), 35, WolfFont);
-            TextField.Parent = this;
+            TextField = new WolfTextField(this, new Point(12, MenuStrip.Height + 50), 35, WolfFont)
+            {
+                Parent = this,
+                OnCtrlSKeyed = () =>
+                {
+                    if (SaveToolStripMenuItem.Enabled)
+                    {
+                        SaveToolStripMenuItem.PerformClick();
+                    }
+                    else
+                    {
+                        SaveNewToolStripMenuItem.PerformClick();
+                    }
+                }
+            };
             Controls.Add(TextField);
             TextField.TabIndex = 0;
 

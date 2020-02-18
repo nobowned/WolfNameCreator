@@ -48,6 +48,8 @@ namespace WolfNameCreator
         bool FocusObtained;
         bool DrawCursor;
 
+        public Action OnCtrlSKeyed { get; set; }
+
         public WolfTextField(Control parent, Point loc, int maxLen, List<Image> wolfFont)
             : base(parent, null, loc.X, loc.Y, WolfNameHelper.ImageWidth * maxLen + 2, WolfNameHelper.ImageHeight + 4)
         {
@@ -170,6 +172,11 @@ namespace WolfNameCreator
             else if (e.Modifiers == Keys.Control && e.KeyCode == Keys.V)
             {
                 PasteFromClipboard();
+            }
+            // ctrl + s
+            else if (e.Modifiers == Keys.Control && e.KeyCode == Keys.S)
+            {
+                OnCtrlSKeyed?.Invoke();
             }
 
             base.OnKeyDown(e);
