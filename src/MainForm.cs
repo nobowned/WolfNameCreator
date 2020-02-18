@@ -25,6 +25,7 @@ namespace WolfNameCreator
             TextField = new WolfTextField(this, new Point(12, MenuStrip.Height + 50), 35, WolfFont);
             TextField.Parent = this;
             Controls.Add(TextField);
+            TextField.TabIndex = 0;
 
             Width = TextField.Width + 40;
             Height = 120 + MenuStrip.Height;
@@ -144,15 +145,6 @@ namespace WolfNameCreator
             else
             {
                 TextField.AddSpecialCharacter(codepoint);
-            }
-        }
-
-        private void FileToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (string.IsNullOrEmpty(ConfigFilePath) || !File.Exists(ConfigFilePath))
-            {
-                ConfigFilePath = null;
-                SaveToolStripMenuItem.Enabled = false;
             }
         }
 

@@ -30,7 +30,6 @@
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.MenuStrip = new System.Windows.Forms.MenuStrip();
-            this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.OpenToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.SaveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.SaveNewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -39,47 +38,38 @@
             // 
             // MenuStrip
             // 
-            this.MenuStrip.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
             this.MenuStrip.BackColor = System.Drawing.SystemColors.Control;
-            this.MenuStrip.Dock = System.Windows.Forms.DockStyle.None;
             this.MenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.fileToolStripMenuItem});
-            this.MenuStrip.Location = new System.Drawing.Point(2, 1);
-            this.MenuStrip.Name = "MenuStrip";
-            this.MenuStrip.Size = new System.Drawing.Size(128, 24);
-            this.MenuStrip.TabIndex = 2;
-            this.MenuStrip.Text = "MenuStrip";
-            // 
-            // fileToolStripMenuItem
-            // 
-            this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.OpenToolStripMenuItem,
             this.SaveToolStripMenuItem,
             this.SaveNewToolStripMenuItem});
-            this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
-            this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
-            this.fileToolStripMenuItem.Text = "File";
-            this.fileToolStripMenuItem.Click += new System.EventHandler(this.FileToolStripMenuItem_Click);
+            this.MenuStrip.Location = new System.Drawing.Point(0, 0);
+            this.MenuStrip.Name = "MenuStrip";
+            this.MenuStrip.Size = new System.Drawing.Size(356, 24);
+            this.MenuStrip.TabIndex = 2;
+            this.MenuStrip.Text = "MenuStrip";
             // 
             // OpenToolStripMenuItem
             // 
+            this.OpenToolStripMenuItem.BackColor = System.Drawing.SystemColors.ControlLightLight;
             this.OpenToolStripMenuItem.Name = "OpenToolStripMenuItem";
-            this.OpenToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.OpenToolStripMenuItem.Size = new System.Drawing.Size(48, 20);
             this.OpenToolStripMenuItem.Text = "Open";
             this.OpenToolStripMenuItem.Click += new System.EventHandler(this.OpenToolStripMenuItem_Click);
             // 
             // SaveToolStripMenuItem
             // 
+            this.SaveToolStripMenuItem.BackColor = System.Drawing.SystemColors.ControlLightLight;
             this.SaveToolStripMenuItem.Name = "SaveToolStripMenuItem";
-            this.SaveToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.SaveToolStripMenuItem.Size = new System.Drawing.Size(43, 20);
             this.SaveToolStripMenuItem.Text = "Save";
             this.SaveToolStripMenuItem.Click += new System.EventHandler(this.SaveToolStripMenuItem_Click);
             // 
             // SaveNewToolStripMenuItem
             // 
+            this.SaveNewToolStripMenuItem.BackColor = System.Drawing.SystemColors.ControlLightLight;
             this.SaveNewToolStripMenuItem.Name = "SaveNewToolStripMenuItem";
-            this.SaveNewToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.SaveNewToolStripMenuItem.Size = new System.Drawing.Size(70, 20);
             this.SaveNewToolStripMenuItem.Text = "Save New";
             this.SaveNewToolStripMenuItem.Click += new System.EventHandler(this.SaveNewToolStripMenuItem_Click);
             // 
@@ -104,7 +94,6 @@
 
         #endregion
         private System.Windows.Forms.MenuStrip MenuStrip;
-        private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem OpenToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem SaveToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem SaveNewToolStripMenuItem;
