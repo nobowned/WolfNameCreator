@@ -65,17 +65,17 @@ namespace WolfNameCreator
             int ActuallyUsed = 0;
             for (int i = 0; i < 32; ++i)
             {
-                if (WolfNameHelper.IsInvalidCodepoint(i))
+                if (WolfFontHelper.IsInvalidCodepoint(i))
                 {
                     continue;
                 }
 
                 PictureBoxes.Add(new SelectablePictureBox(i, PicBox_MouseDown)
                 {
-                    Image = Properties.Resources.WolfChars.Clone(WolfNameHelper.GetCodepointBounds(i), Properties.Resources.WolfChars.PixelFormat),
-                    Location = new Point(LocationX + WolfNameHelper.ImageWidth * ActuallyUsed++, LocationY),
-                    Width = WolfNameHelper.ImageWidth,
-                    Height = WolfNameHelper.ImageHeight,
+                    Image = Properties.Resources.WolfChars.Clone(WolfFontHelper.GetCodepointBounds(i), Properties.Resources.WolfChars.PixelFormat),
+                    Location = new Point(LocationX + WolfFontHelper.ImageWidth * ActuallyUsed++, LocationY),
+                    Width = WolfFontHelper.ImageWidth,
+                    Height = WolfFontHelper.ImageHeight,
                     Parent = this
                 });
             }
@@ -87,23 +87,22 @@ namespace WolfNameCreator
             ActuallyUsed = 0;
             for (int i = 32; i < 32 + 8; ++i)
             {
-                var ColorIndex = i % WolfNameHelper.ImageWidth;
                 PictureBoxes.Add(new SelectablePictureBox(i, PicBox_MouseDown)
                 {
                     Location = new Point(LocationX + 18 * ActuallyUsed++, LocationY),
-                    Width = WolfNameHelper.ImageWidth,
-                    Height = WolfNameHelper.ImageHeight,
+                    Width = WolfFontHelper.ImageWidth,
+                    Height = WolfFontHelper.ImageHeight,
                     Parent = this,
-                    BackColor = WolfColorUtil.WolfColorToRealColor(ColorIndex),
+                    BackColor = WolfColorUtil.CodepointToRealColor(i),
                     BorderPen = new Pen(Color.Black)
                 });
             }
 
             // Create the "WolfFont"; which is just a list of bitmaps, each bitmap a wolf character.
             WolfFont = new List<Image>();
-            for (int i = 0; i <= WolfNameHelper.MaxCodepoint; ++i)
+            for (int i = 0; i <= WolfFontHelper.MaxCodepoint; ++i)
             {
-                WolfFont.Add(Properties.Resources.WolfChars.Clone(WolfNameHelper.GetCodepointBounds(i), Properties.Resources.WolfChars.PixelFormat));
+                WolfFont.Add(Properties.Resources.WolfChars.Clone(WolfFontHelper.GetCodepointBounds(i), Properties.Resources.WolfChars.PixelFormat));
             }
         }
 
@@ -158,7 +157,7 @@ namespace WolfNameCreator
             if (codepoint > 31)
             {
                 var Color = WolfColorUtil.CodepointToRealColor(codepoint);
-                var NumberCodepoint = (codepoint % WolfNameHelper.ImageWidth) + 48;
+                var NumberCodepoint = (codepoint % WolfFontHelper.ImageWidth) + 48;
                 TextField.AddColorCharacter(Color, NumberCodepoint);
             }
             else

@@ -40,42 +40,42 @@ namespace WolfNameCreator
             }
         }
 
-        public static int RealColorToCodepoint(Color color)
+        public static int RealColorToWolfColor(Color color)
         {
-            int WolfColor;
             if (color == Color.Black)
             {
-                WolfColor = WolfBlack;
+                return WolfBlack;
             }
-            else if (color == Color.Red)
+            if (color == Color.Red)
             {
-                WolfColor = WolfRed;
+                return WolfRed;
             }
-            else if (color == Color.Green)
+            if (color == Color.Green)
             {
-                WolfColor = WolfGreen;
+                return WolfGreen;
             }
-            else if (color == Color.Yellow)
+            if (color == Color.Yellow)
             {
-                WolfColor = WolfYellow;
+                return WolfYellow;
             }
-            else if (color == Color.Blue)
+            if (color == Color.Blue)
             {
-                WolfColor = WolfBlue;
+                return WolfBlue;
             }
-            else if (color == Color.Cyan)
+            if (color == Color.Cyan)
             {
-                WolfColor = WolfCyan;
+                return WolfCyan;
             }
-            else if (color == Color.Purple)
+            if (color == Color.Purple)
             {
-                WolfColor = WolfPurple;
+                return WolfPurple;
             }
-            else
-            {
-                WolfColor = WolfWhite;
-            }
-            return WolfColor.ToString()[0];
+            return WolfWhite;
+        }
+
+        public static int RealColorToCodepoint(Color color)
+        {
+            return RealColorToWolfColor(color).ToString()[0];
         }
 
         public static int CodepointToWolfColor(int codepoint)

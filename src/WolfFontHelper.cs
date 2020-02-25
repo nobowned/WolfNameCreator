@@ -2,7 +2,7 @@
 
 namespace WolfNameCreator
 {
-    public static class WolfNameHelper
+    public static class WolfFontHelper
     {
         public const int ImageWidth = 16;
         public const int ImageHeight = 16;

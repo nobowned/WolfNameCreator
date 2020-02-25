@@ -62,7 +62,7 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="WolfColorUtil.cs" />
-    <Compile Include="WolfNameHelper.cs" />
+    <Compile Include="WolfFontHelper.cs" />
     <Compile Include="WolfTextField.cs">
       <SubType>Component</SubType>
     </Compile>

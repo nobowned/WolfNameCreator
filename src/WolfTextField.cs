@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Media;
 using System.Drawing;
 using System.Windows.Forms;
+using System.Linq;
 
 namespace WolfNameCreator
 {
@@ -53,7 +54,7 @@ namespace WolfNameCreator
         public Action OnCtrlSKeyed { get; set; }
 
         public WolfTextField(Control parent, Point loc, int maxLen, List<Image> wolfFont)
-            : base(parent, null, loc.X, loc.Y, WolfNameHelper.ImageWidth * maxLen + 2, WolfNameHelper.ImageHeight + 4)
+            : base(parent, null, loc.X, loc.Y, WolfFontHelper.ImageWidth * maxLen + 2, WolfFontHelper.ImageHeight + 4)
         {
             MaxLength = maxLen;
             BackColor = Color.LightGray;
@@ -135,7 +136,7 @@ namespace WolfNameCreator
             int ImgIndex = 0;
             foreach (var Char in CharsToDraw)
             {
-                e.Graphics.DrawImage(Char.Img, new Rectangle((ImgIndex++ * WolfNameHelper.ImageWidth) + 1, 1,
+                e.Graphics.DrawImage(Char.Img, new Rectangle((ImgIndex++ * WolfFontHelper.ImageWidth) + 1, 1,
                     Char.Img.Width, Char.Img.Height), 0, 0, Char.Img.Width, Char.Img.Height,
                     GraphicsUnit.Pixel, Char.ImageAttributes);
             }
@@ -242,7 +243,7 @@ namespace WolfNameCreator
             Invalidate(new Rectangle(0, 0, 1, Height));
             Invalidate(new Rectangle(Width - 2, 0, 1, Height));
             Invalidate(new Rectangle(0, Height - 2, Width, 1));
-            Invalidate(new Rectangle(CursorPosition, WolfNameHelper.GetCodepointSize()));
+            Invalidate(new Rectangle(CursorPosition, WolfFontHelper.GetCodepointSize()));
             DrawCursor = false;
             Update();
         }
@@ -272,7 +273,7 @@ namespace WolfNameCreator
             }
 
             int Codepoint = key;
-            if (Codepoint >= 32 && Codepoint <= WolfNameHelper.MaxCodepoint)
+            if (Codepoint >= 32 && Codepoint <= WolfFontHelper.MaxCodepoint)
             {
                 var CursorXPositionBeforeAdd = CursorPosition.X;
                 AddNormalCharacter(Codepoint);
@@ -345,6 +346,8 @@ namespace WolfNameCreator
 
         public void ToggleDrawColorCodes(bool fromUndoRedoSystem = false)
         {
+            var PreviousCharacters = new List<Character>(CharsToDraw);
+            var PreviousXPosition = CursorPosition.X;
             DrawColorCodes = !DrawColorCodes;
             ApplyDrawColorCodesOptionToCharacters();
             CursorPosition = StartingCursorPosition;
@@ -354,8 +357,8 @@ namespace WolfNameCreator
                 PushUndoableCommand(new Command
                 {
                     T = Command.Type.ToggleDrawColorCodes,
-                    ExecuteArgs = new List<object> { },
-                    UndoArgs = new List<object> { }
+                    ExecuteArgs = new List<object> { DrawColorCodes, CharsToDraw.ToList(), CursorPosition.X },
+                    UndoArgs = new List<object> { !DrawColorCodes, PreviousCharacters, PreviousXPosition }
                 });
             }
         }
@@ -428,13 +431,13 @@ namespace WolfNameCreator
 
         Tuple<int, int> DeletePreviousCharacter()
         {
-            var DestX = CursorPosition.X - WolfNameHelper.ImageWidth;
+            var DestX = CursorPosition.X - WolfFontHelper.ImageWidth;
             if (DestX < 0)
             {
                 return new Tuple<int, int>(-1, -1);
             }
 
-            var Index = DestX / WolfNameHelper.ImageWidth;
+            var Index = DestX / WolfFontHelper.ImageWidth;
             var Char = CharsToDraw[Index];
             CharsToDraw.Remove(Char);
             CursorPosition.X = DestX;
@@ -485,7 +488,11 @@ namespace WolfNameCreator
                     SetText((string)command.ExecuteArgs[0]);
                     break;
                 case Command.Type.ToggleDrawColorCodes:
-                    ToggleDrawColorCodes(true);
+                    DrawColorCodes = (bool)command.ExecuteArgs[0];
+                    CharsToDraw.Clear();
+                    CharsToDraw.AddRange((List<Character>)command.ExecuteArgs[1]);
+                    CursorPosition.X = (int)command.ExecuteArgs[2];
+                    Refresh();
                     break;
             }
         }
@@ -533,7 +540,11 @@ namespace WolfNameCreator
                     SetText((string)command.UndoArgs[0]);
                     break;
                 case Command.Type.ToggleDrawColorCodes:
-                    ToggleDrawColorCodes(true);
+                    DrawColorCodes = (bool)command.UndoArgs[0];
+                    CharsToDraw.Clear();
+                    CharsToDraw.AddRange((List<Character>)command.UndoArgs[1]);
+                    CursorPosition.X = (int)command.UndoArgs[2];
+                    Refresh();
                     break;
             }
         }
@@ -549,10 +560,10 @@ namespace WolfNameCreator
             if (keyData == Keys.Left ||
                 keyData == Keys.Right)
             {
-                var Offset = keyData == Keys.Left ? -WolfNameHelper.ImageWidth : WolfNameHelper.ImageWidth;
+                var Offset = keyData == Keys.Left ? -WolfFontHelper.ImageWidth : WolfFontHelper.ImageWidth;
 
                 var DestX = CursorPosition.X + Offset;
-                if (DestX / WolfNameHelper.ImageWidth <= CharsToDraw.Count &&
+                if (DestX / WolfFontHelper.ImageWidth <= CharsToDraw.Count &&
                     DestX > 0)
                 {
                     InvalidateCursor();
@@ -606,7 +617,7 @@ namespace WolfNameCreator
 
         void AddCharacter(int codepoint, Color color)
         {
-            if (codepoint > WolfNameHelper.MaxCodepoint)
+            if (codepoint > WolfFontHelper.MaxCodepoint)
             {
                 return;
             }
@@ -627,12 +638,12 @@ namespace WolfNameCreator
                 return;
             }
 
-            var Index = CursorPosition.X / WolfNameHelper.ImageWidth;
+            var Index = CursorPosition.X / WolfFontHelper.ImageWidth;
             CharsToDraw.Insert(Index, character);
 
             UpdateCharacterColors();
             InvalidateCharacters(Index);
-            CursorPosition.X += WolfNameHelper.ImageWidth;
+            CursorPosition.X += WolfFontHelper.ImageWidth;
             Update();
         }
 
@@ -696,26 +707,26 @@ namespace WolfNameCreator
             if (PreviousIndex >= 0 && CharsToDraw[PreviousIndex].Codepoint == WolfColorUtil.EscapeCharacter)
             {
                 var InvalidatePosition = new Point(CursorPosition.X, CursorPosition.Y);
-                InvalidatePosition.X -= WolfNameHelper.ImageWidth;
-                Invalidate(new Rectangle(InvalidatePosition, new Size(MaxLength * WolfNameHelper.ImageWidth, WolfNameHelper.ImageHeight)));
+                InvalidatePosition.X -= WolfFontHelper.ImageWidth;
+                Invalidate(new Rectangle(InvalidatePosition, new Size(MaxLength * WolfFontHelper.ImageWidth, WolfFontHelper.ImageHeight)));
             }
             else
             {
-                Invalidate(new Rectangle(CursorPosition, new Size(MaxLength * WolfNameHelper.ImageWidth, WolfNameHelper.ImageHeight)));
+                Invalidate(new Rectangle(CursorPosition, new Size(MaxLength * WolfFontHelper.ImageWidth, WolfFontHelper.ImageHeight)));
             }
         }
 
         void InvalidateCursor()
         {
-            Invalidate(new Rectangle(CursorPosition, new Size(WolfNameHelper.ImageWidth, 2)));
-            Invalidate(new Rectangle(CursorPosition, new Size(2, WolfNameHelper.ImageHeight)));
-            Invalidate(new Rectangle(new Point(CursorPosition.X + CursorSize.Width, CursorPosition.Y), new Size(2, WolfNameHelper.ImageHeight)));
-            Invalidate(new Rectangle(new Point(CursorPosition.X, CursorPosition.Y + CursorSize.Height), new Size(WolfNameHelper.ImageWidth, 2)));
+            Invalidate(new Rectangle(CursorPosition, new Size(WolfFontHelper.ImageWidth, 2)));
+            Invalidate(new Rectangle(CursorPosition, new Size(2, WolfFontHelper.ImageHeight)));
+            Invalidate(new Rectangle(new Point(CursorPosition.X + CursorSize.Width, CursorPosition.Y), new Size(2, WolfFontHelper.ImageHeight)));
+            Invalidate(new Rectangle(new Point(CursorPosition.X, CursorPosition.Y + CursorSize.Height), new Size(WolfFontHelper.ImageWidth, 2)));
         }
 
         int GetCharacterIndexFromCursorPosition()
         {
-            return CursorPosition.X / WolfNameHelper.ImageWidth;
+            return CursorPosition.X / WolfFontHelper.ImageWidth;
         }
     }
 }
