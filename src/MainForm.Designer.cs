@@ -33,6 +33,7 @@
             this.OpenToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.SaveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.SaveNewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.DrawColorCodesCheckBox = new System.Windows.Forms.CheckBox();
             this.MenuStrip.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -73,11 +74,24 @@
             this.SaveNewToolStripMenuItem.Text = "Save New";
             this.SaveNewToolStripMenuItem.Click += new System.EventHandler(this.SaveNewToolStripMenuItem_Click);
             // 
+            // DrawColorCodesCheckBox
+            // 
+            this.DrawColorCodesCheckBox.AutoSize = true;
+            this.DrawColorCodesCheckBox.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.DrawColorCodesCheckBox.Location = new System.Drawing.Point(173, 4);
+            this.DrawColorCodesCheckBox.Name = "DrawColorCodesCheckBox";
+            this.DrawColorCodesCheckBox.Size = new System.Drawing.Size(109, 17);
+            this.DrawColorCodesCheckBox.TabIndex = 3;
+            this.DrawColorCodesCheckBox.Text = "Draw color codes";
+            this.DrawColorCodesCheckBox.UseVisualStyleBackColor = true;
+            this.DrawColorCodesCheckBox.CheckedChanged += new System.EventHandler(this.DrawColorCodesCheckBox_CheckedChanged);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(356, 95);
+            this.Controls.Add(this.DrawColorCodesCheckBox);
             this.Controls.Add(this.MenuStrip);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
@@ -99,5 +113,6 @@
         private System.Windows.Forms.ToolStripMenuItem OpenToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem SaveToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem SaveNewToolStripMenuItem;
+        private System.Windows.Forms.CheckBox DrawColorCodesCheckBox;
     }
 }

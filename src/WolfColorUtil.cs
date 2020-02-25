@@ -39,7 +39,45 @@ namespace WolfNameCreator
                     return Color.White;
             }
         }
-        
+
+        public static int RealColorToCodepoint(Color color)
+        {
+            int WolfColor;
+            if (color == Color.Black)
+            {
+                WolfColor = WolfBlack;
+            }
+            else if (color == Color.Red)
+            {
+                WolfColor = WolfRed;
+            }
+            else if (color == Color.Green)
+            {
+                WolfColor = WolfGreen;
+            }
+            else if (color == Color.Yellow)
+            {
+                WolfColor = WolfYellow;
+            }
+            else if (color == Color.Blue)
+            {
+                WolfColor = WolfBlue;
+            }
+            else if (color == Color.Cyan)
+            {
+                WolfColor = WolfCyan;
+            }
+            else if (color == Color.Purple)
+            {
+                WolfColor = WolfPurple;
+            }
+            else
+            {
+                WolfColor = WolfWhite;
+            }
+            return WolfColor.ToString()[0];
+        }
+
         public static int CodepointToWolfColor(int codepoint)
         {
             return codepoint % 8;

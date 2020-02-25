@@ -19,7 +19,8 @@ namespace WolfNameCreator
                 AddSpecialCharacter,
                 Clear,
                 CopyToClipboard,
-                PasteFromClipboard
+                PasteFromClipboard,
+                ToggleDrawColorCodes
             }
 
             public Type T;
@@ -47,6 +48,7 @@ namespace WolfNameCreator
         Size CursorSize;
         bool FocusObtained;
         bool DrawCursor;
+        public bool DrawColorCodes { get; private set; } = true;
 
         public Action OnCtrlSKeyed { get; set; }
 
@@ -101,7 +103,7 @@ namespace WolfNameCreator
             else if (e.ClickedItem.Text == CopyMenuItemName)
             {
                 var PreviousClipboardText = Clipboard.GetText();
-                var Txt = GetText();
+                var Txt = GetFullText();
                 Clipboard.SetText(string.IsNullOrEmpty(Txt) ? " " : Txt);
                 PushUndoableCommand(new Command
                 {
@@ -256,26 +258,28 @@ namespace WolfNameCreator
         {
             if (key == (int)Keys.Back)
             {
-                int DeletedCodepoint = DeletePreviousCharacter();
-                if (DeletedCodepoint != -1)
+                var DeleteResult = DeletePreviousCharacter();
+                if (DeleteResult.Codepoint != -1)
                 {
                     PushUndoableCommand(new Command
                     {
                         T = Command.Type.DeletePreviousCharacter,
-                        ExecuteArgs = new List<object> { },
-                        UndoArgs = new List<object> { DeletedCodepoint }
+                        ExecuteArgs = new List<object> { DeleteResult.XPosition },
+                        UndoArgs = new List<object> { DeleteResult.Codepoint, DeleteResult.XPosition }
                     });
                 }
             }
 
-            if (key >= 32 && key <= WolfNameHelper.MaxCodepoint)
+            int Codepoint = key;
+            if (Codepoint >= 32 && Codepoint <= WolfNameHelper.MaxCodepoint)
             {
-                AddNormalCharacter(key);
+                var CursorXPositionBeforeAdd = CursorPosition.X;
+                AddNormalCharacter(Codepoint);
                 PushUndoableCommand(new Command
                 {
                     T = Command.Type.AddNormalCharacter,
-                    ExecuteArgs = new List<object> { key },
-                    UndoArgs = new List<object> { }
+                    ExecuteArgs = new List<object> { Codepoint, CursorXPositionBeforeAdd },
+                    UndoArgs = new List<object> { CursorPosition.X }
                 });
             }
         }
@@ -288,6 +292,27 @@ namespace WolfNameCreator
                 Result += char.ConvertFromUtf32(Char.Codepoint);
             }
             return Result;
+        }
+
+        public string GetFullText()
+        {
+            var ManuallyColored = false;
+            if (!DrawColorCodes)
+            {
+                DrawColorCodes = true;
+                ApplyDrawColorCodesOptionToCharacters();
+                ManuallyColored = true;
+            }
+
+            var FullText = GetText();
+
+            if (ManuallyColored)
+            {
+                DrawColorCodes = false;
+                ApplyDrawColorCodesOptionToCharacters();
+            }
+
+            return FullText;
         }
 
         public void SetText(string text)
@@ -317,6 +342,70 @@ namespace WolfNameCreator
             }
         }
 
+        public void ToggleDrawColorCodes(bool fromUndoRedoSystem = false)
+        {
+            DrawColorCodes = !DrawColorCodes;
+            ApplyDrawColorCodesOptionToCharacters();
+            CursorPosition = StartingCursorPosition;
+            Refresh();
+            if (!fromUndoRedoSystem)
+            {
+                PushUndoableCommand(new Command
+                {
+                    T = Command.Type.ToggleDrawColorCodes,
+                    ExecuteArgs = new List<object> { },
+                    UndoArgs = new List<object> { }
+                });
+            }
+        }
+
+        void ApplyDrawColorCodesOptionToCharacters()
+        {
+            if (DrawColorCodes)
+            {
+                var ColoredCharsToDraw = new List<Character>();
+                for (int Index = CharsToDraw.Count - 1; Index >= 0; --Index)
+                {
+                    ColoredCharsToDraw.Insert(0, CharsToDraw[Index]);
+                    var PreviousIndex = Index - 1;
+                    if ((Index == 0 && CharsToDraw[Index].Color != Color.White) ||
+                        (PreviousIndex >= 0 && CharsToDraw[Index].Color != CharsToDraw[PreviousIndex].Color))
+                    {
+                        var ColorCodepoint = WolfColorUtil.RealColorToCodepoint(CharsToDraw[Index].Color);
+                        ColoredCharsToDraw.Insert(0, new Character
+                        {
+                            Codepoint = ColorCodepoint,
+                            Color = CharsToDraw[Index].Color,
+                            Img = WolfFont[ColorCodepoint]
+                        });
+                        ColoredCharsToDraw.Insert(0, new Character
+                        {
+                            Codepoint = WolfColorUtil.EscapeCharacter,
+                            Color = CharsToDraw[Index].Color,
+                            Img = WolfFont[WolfColorUtil.EscapeCharacter]
+                        });
+                    }
+                }
+                CharsToDraw.Clear();
+                CharsToDraw.AddRange(ColoredCharsToDraw);
+            }
+            else
+            {
+                var ColorlessCharsToDraw = new List<Character>(CharsToDraw);
+                for (int Index = 0; Index < CharsToDraw.Count; ++Index)
+                {
+                    var NextIndex = Index + 1;
+                    if (NextIndex < CharsToDraw.Count && CharsToDraw[Index].Codepoint == WolfColorUtil.EscapeCharacter)
+                    {
+                        ColorlessCharsToDraw.Remove(CharsToDraw[Index]);
+                        ColorlessCharsToDraw.Remove(CharsToDraw[NextIndex]);
+                    }
+                }
+                CharsToDraw.Clear();
+                CharsToDraw.AddRange(ColorlessCharsToDraw);
+            }
+        }
+
         void PasteFromClipboard()
         {
             var PreviousText = GetText();
@@ -336,12 +425,12 @@ namespace WolfNameCreator
             Refresh();
         }
 
-        int DeletePreviousCharacter()
+        (int Codepoint, int XPosition) DeletePreviousCharacter()
         {
             var DestX = CursorPosition.X - WolfNameHelper.ImageWidth;
             if (DestX < 0)
             {
-                return -1;
+                return (-1, -1);
             }
 
             var Index = DestX / WolfNameHelper.ImageWidth;
@@ -353,7 +442,7 @@ namespace WolfNameCreator
             InvalidateCharacters(Index);
             Update();
 
-            return Char.Codepoint;
+            return (Char.Codepoint, DestX);
         }
 
         void ExecuteCommand(Command command)
@@ -361,18 +450,28 @@ namespace WolfNameCreator
             switch (command.T)
             {
                 case Command.Type.AddNormalCharacter:
+                    InvalidateCursor();
+                    CursorPosition.X = (int)command.ExecuteArgs[1];
                     AddNormalCharacter((int)command.ExecuteArgs[0]);
                     break;
                 case Command.Type.AddColorCharacter:
-                    AddColorCharacter((Color)command.ExecuteArgs[0], (int)command.ExecuteArgs[1]);
+                    InvalidateCursor();
+                    CursorPosition.X = (int)command.ExecuteArgs[2];
+                    AddColorCharacter((Color)command.ExecuteArgs[0], (int)command.ExecuteArgs[1], true);
                     break;
                 case Command.Type.AddSpecialCharacter:
-                    AddSpecialCharacter((int)command.ExecuteArgs[0]);
+                    InvalidateCursor();
+                    CursorPosition.X = (int)command.ExecuteArgs[1];
+                    AddSpecialCharacter((int)command.ExecuteArgs[0], true);
                     break;
                 case Command.Type.DeletePreviousCharacter:
+                    InvalidateCursor();
+                    CursorPosition.X = (int)command.ExecuteArgs[0];
                     DeletePreviousCharacter();
                     break;
                 case Command.Type.DeleteSelectedCharacter:
+                    InvalidateCursor();
+                    CursorPosition.X = (int)command.ExecuteArgs[0];
                     DeleteSelectedCharacter();
                     break;
                 case Command.Type.Clear:
@@ -384,6 +483,9 @@ namespace WolfNameCreator
                 case Command.Type.PasteFromClipboard:
                     SetText((string)command.ExecuteArgs[0]);
                     break;
+                case Command.Type.ToggleDrawColorCodes:
+                    ToggleDrawColorCodes(true);
+                    break;
             }
         }
 
@@ -392,19 +494,29 @@ namespace WolfNameCreator
             switch (command.T)
             {
                 case Command.Type.AddNormalCharacter:
+                    InvalidateCursor();
+                    CursorPosition.X = (int)command.UndoArgs[0];
                     DeletePreviousCharacter();
                     break;
                 case Command.Type.AddColorCharacter:
+                    InvalidateCursor();
+                    CursorPosition.X = (int)command.UndoArgs[0];
                     DeletePreviousCharacter();
                     DeletePreviousCharacter();
                     break;
                 case Command.Type.AddSpecialCharacter:
+                    InvalidateCursor();
+                    CursorPosition.X = (int)command.UndoArgs[0];
                     DeletePreviousCharacter();
                     break;
                 case Command.Type.DeletePreviousCharacter:
+                    InvalidateCursor();
+                    CursorPosition.X = (int)command.UndoArgs[1];
                     AddNormalCharacter((int)command.UndoArgs[0]);
                     break;
                 case Command.Type.DeleteSelectedCharacter:
+                    InvalidateCursor();
+                    CursorPosition.X = (int)command.UndoArgs[1];
                     var DesiredCursorPosition = CursorPosition;
                     AddNormalCharacter((int)command.UndoArgs[0]);
                     CursorPosition = DesiredCursorPosition;
@@ -418,6 +530,9 @@ namespace WolfNameCreator
                     break;
                 case Command.Type.PasteFromClipboard:
                     SetText((string)command.UndoArgs[0]);
+                    break;
+                case Command.Type.ToggleDrawColorCodes:
+                    ToggleDrawColorCodes(true);
                     break;
             }
         }
@@ -454,8 +569,8 @@ namespace WolfNameCreator
                     PushUndoableCommand(new Command
                     {
                         T = Command.Type.DeleteSelectedCharacter,
-                        ExecuteArgs = new List<object> { },
-                        UndoArgs = new List<object> { DeletedCodepoint }
+                        ExecuteArgs = new List<object> { CursorPosition.X },
+                        UndoArgs = new List<object> { DeletedCodepoint, CursorPosition.X }
                     });
                 }
                 return true;
@@ -520,27 +635,35 @@ namespace WolfNameCreator
             Update();
         }
 
-        public void AddColorCharacter(Color color, int numberCodepoint)
+        public void AddColorCharacter(Color color, int numberCodepoint, bool fromUndoRedoSystem = false)
         {
+            var CursorXPositionBeforeAdd = CursorPosition.X;
             AddCharacter(WolfColorUtil.EscapeCharacter, color);
             AddCharacter(numberCodepoint, color);
-            PushUndoableCommand(new Command
+            if (!fromUndoRedoSystem)
             {
-                T = Command.Type.AddColorCharacter,
-                ExecuteArgs = new List<object> { color, numberCodepoint },
-                UndoArgs = new List<object> { }
-            });
+                PushUndoableCommand(new Command
+                {
+                    T = Command.Type.AddColorCharacter,
+                    ExecuteArgs = new List<object> { color, numberCodepoint, CursorXPositionBeforeAdd },
+                    UndoArgs = new List<object> { CursorPosition.X }
+                });
+            }
         }
 
-        public void AddSpecialCharacter(int codepoint)
+        public void AddSpecialCharacter(int codepoint, bool fromUndoRedoSystem = false)
         {
+            var CursorXPositionBeforeAdd = CursorPosition.X;
             AddNormalCharacter(codepoint);
-            PushUndoableCommand(new Command
+            if (!fromUndoRedoSystem)
             {
-                T = Command.Type.AddSpecialCharacter,
-                ExecuteArgs = new List<object> { codepoint },
-                UndoArgs = new List<object> { }
-            });
+                PushUndoableCommand(new Command
+                {
+                    T = Command.Type.AddSpecialCharacter,
+                    ExecuteArgs = new List<object> { codepoint, CursorXPositionBeforeAdd },
+                    UndoArgs = new List<object> { CursorPosition.X }
+                });
+            }
         }
 
         void UpdateCharacterColors()

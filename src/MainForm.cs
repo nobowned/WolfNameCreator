@@ -48,6 +48,10 @@ namespace WolfNameCreator
             ParseArguments(args);
 
             SaveToolStripMenuItem.Enabled = !string.IsNullOrEmpty(ConfigFilePath);
+
+            DrawColorCodesCheckBox.CheckedChanged -= DrawColorCodesCheckBox_CheckedChanged;
+            DrawColorCodesCheckBox.Checked = TextField.DrawColorCodes;
+            DrawColorCodesCheckBox.CheckedChanged += DrawColorCodesCheckBox_CheckedChanged;
         }
 
         void InitializeSelectablePictureBoxes()
@@ -197,7 +201,7 @@ namespace WolfNameCreator
 
             var Lines = File.ReadAllLines(ConfigFilePath).ToList();
             Lines.RemoveAll(line => line.Contains(NameKey));
-            Lines.Add($"set name \"{TextField.GetText()}\"");
+            Lines.Add($"set name \"{TextField.GetFullText()}\"");
             File.WriteAllLines(ConfigFilePath, Lines.ToArray());
 
             Task.Delay(100).ContinueWith(t => Cursor = Cursors.Default, scheduler: TaskScheduler.FromCurrentSynchronizationContext());
@@ -220,7 +224,7 @@ namespace WolfNameCreator
                     {
                         using (var Writer = new StreamWriter(Stream))
                         {
-                            Writer.WriteLine($"set name \"{TextField.GetText()}\"");
+                            Writer.WriteLine($"set name \"{TextField.GetFullText()}\"");
                             ConfigFilePath = FileDialog.FileName;
                             SaveToolStripMenuItem.Enabled = !string.IsNullOrEmpty(ConfigFilePath);
                         }
@@ -242,6 +246,12 @@ namespace WolfNameCreator
             {
                 Location = Settings.Default.FormLocation;
             }
+        }
+
+        private void DrawColorCodesCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            TextField.ToggleDrawColorCodes();
+            TextField.Focus();
         }
     }
 }
