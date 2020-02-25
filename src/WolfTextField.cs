@@ -258,14 +258,15 @@ namespace WolfNameCreator
         {
             if (key == (int)Keys.Back)
             {
+                var PreviousXPosition = CursorPosition.X;
                 var DeleteResult = DeletePreviousCharacter();
-                if (DeleteResult.Codepoint != -1)
+                if (DeleteResult.Item1 != -1)
                 {
                     PushUndoableCommand(new Command
                     {
                         T = Command.Type.DeletePreviousCharacter,
-                        ExecuteArgs = new List<object> { DeleteResult.XPosition },
-                        UndoArgs = new List<object> { DeleteResult.Codepoint, DeleteResult.XPosition }
+                        ExecuteArgs = new List<object> { PreviousXPosition },
+                        UndoArgs = new List<object> { DeleteResult.Item1, DeleteResult.Item2 }
                     });
                 }
             }
@@ -425,12 +426,12 @@ namespace WolfNameCreator
             Refresh();
         }
 
-        (int Codepoint, int XPosition) DeletePreviousCharacter()
+        Tuple<int, int> DeletePreviousCharacter()
         {
             var DestX = CursorPosition.X - WolfNameHelper.ImageWidth;
             if (DestX < 0)
             {
-                return (-1, -1);
+                return new Tuple<int, int>(-1, -1);
             }
 
             var Index = DestX / WolfNameHelper.ImageWidth;
@@ -442,7 +443,7 @@ namespace WolfNameCreator
             InvalidateCharacters(Index);
             Update();
 
-            return (Char.Codepoint, DestX);
+            return new Tuple<int, int>(Char.Codepoint, DestX);
         }
 
         void ExecuteCommand(Command command)
