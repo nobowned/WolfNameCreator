@@ -92,14 +92,7 @@ namespace WolfNameCreator
         {
             if (e.ClickedItem.Text == ClearMenuItemName)
             {
-                var PreviousText = GetText();
-                Clear();
-                PushUndoableCommand(new Command
-                {
-                    T = Command.Type.Clear,
-                    ExecuteArgs = new List<object> { },
-                    UndoArgs = new List<object> { PreviousText }
-                });
+                ClearText();
             }
             else if (e.ClickedItem.Text == CopyMenuItemName)
             {
@@ -141,43 +134,8 @@ namespace WolfNameCreator
 
         protected override void OnKeyDown(KeyEventArgs e)
         {
-            // ctrl + shift + z (redo)
-            if ((e.Modifiers & Keys.Control) == Keys.Control && (e.Modifiers & Keys.Shift) == Keys.Shift && e.KeyCode == Keys.Z)
-            {
-                if (UndoneCommands.Count > 0)
-                {
-                    var Cmd = UndoneCommands.Pop();
-                    ExecuteCommand(Cmd);
-                    ExecutedCommands.Push(Cmd);
-                }
-            }
-            // ctrl + z (undo)
-            else if (e.Modifiers == Keys.Control && e.KeyCode == Keys.Z)
-            {
-                if (ExecutedCommands.Count > 0)
-                {
-                    var Cmd = ExecutedCommands.Pop();
-                    UndoCommand(Cmd);
-                    UndoneCommands.Push(Cmd);
-                }
-            }
-            // ctrl + c (copy)
-            else if (e.Modifiers == Keys.Control && e.KeyCode == Keys.C)
-            {
-                CopyToClipboard();
-            }
-            // ctrl + v (paste)
-            else if (e.Modifiers == Keys.Control && e.KeyCode == Keys.V)
-            {
-                PasteFromClipboard();
-            }
-            // ctrl + s (save)
-            else if (e.Modifiers == Keys.Control && e.KeyCode == Keys.S)
-            {
-                OnCtrlSKeyed?.Invoke();
-            }
             // ctrl + left (move cursor to end)
-            else if (e.Modifiers == Keys.Control && e.KeyCode == Keys.Left)
+            if (e.Modifiers == Keys.Control && e.KeyCode == Keys.Left)
             {
                 InvalidateCursor();
                 CursorPosition = StartingCursorPosition;
@@ -407,7 +365,39 @@ namespace WolfNameCreator
             }
         }
 
-        void PasteFromClipboard()
+        public void Undo()
+        {
+            if (ExecutedCommands.Count > 0)
+            {
+                var Cmd = ExecutedCommands.Pop();
+                UndoCommand(Cmd);
+                UndoneCommands.Push(Cmd);
+            }
+        }
+
+        public void Redo()
+        {
+            if (UndoneCommands.Count > 0)
+            {
+                var Cmd = UndoneCommands.Pop();
+                ExecuteCommand(Cmd);
+                ExecutedCommands.Push(Cmd);
+            }
+        }
+
+        public void ClearText()
+        {
+            var PreviousText = GetText();
+            Clear();
+            PushUndoableCommand(new Command
+            {
+                T = Command.Type.Clear,
+                ExecuteArgs = new List<object> { },
+                UndoArgs = new List<object> { PreviousText }
+            });
+        }
+
+        public void PasteFromClipboard()
         {
             var PreviousText = GetText();
             AppendText(Clipboard.GetText());
@@ -419,7 +409,7 @@ namespace WolfNameCreator
             });
         }
 
-        void CopyToClipboard()
+        public void CopyToClipboard()
         {
             var PreviousClipboardText = Clipboard.GetText();
             var Txt = GetFullText();

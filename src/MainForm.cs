@@ -40,9 +40,9 @@ namespace WolfNameCreator
 
             ParseArguments(args);
 
-            DrawColorCodesCheckBox.CheckedChanged -= DrawColorCodesCheckBox_CheckedChanged;
-            DrawColorCodesCheckBox.Checked = TextField.DrawColorCodes;
-            DrawColorCodesCheckBox.CheckedChanged += DrawColorCodesCheckBox_CheckedChanged;
+            DrawColorCodesToolStripMenuItem.CheckedChanged -= DrawColorCodesToolStripMenuItem_CheckedChanged;
+            DrawColorCodesToolStripMenuItem.Checked = TextField.DrawColorCodes;
+            DrawColorCodesToolStripMenuItem.CheckedChanged += DrawColorCodesToolStripMenuItem_CheckedChanged;
         }
 
         void InitializeSelectablePictureBoxes()
@@ -237,10 +237,34 @@ namespace WolfNameCreator
             }
         }
 
-        private void DrawColorCodesCheckBox_CheckedChanged(object sender, EventArgs e)
+        private void DrawColorCodesToolStripMenuItem_CheckedChanged(object sender, EventArgs e)
         {
             TextField.ToggleDrawColorCodes();
-            TextField.Focus();
+        }
+
+        private void UndoToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            TextField.Undo();
+        }
+
+        private void RedoToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            TextField.Redo();
+        }
+
+        private void ClearToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            TextField.ClearText();
+        }
+
+        private void CopyToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            TextField.CopyToClipboard();
+        }
+
+        private void PasteToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            TextField.PasteFromClipboard();
         }
     }
 }
