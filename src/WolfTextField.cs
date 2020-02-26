@@ -103,15 +103,7 @@ namespace WolfNameCreator
             }
             else if (e.ClickedItem.Text == CopyMenuItemName)
             {
-                var PreviousClipboardText = Clipboard.GetText();
-                var Txt = GetFullText();
-                Clipboard.SetText(string.IsNullOrEmpty(Txt) ? " " : Txt);
-                PushUndoableCommand(new Command
-                {
-                    T = Command.Type.CopyToClipboard,
-                    ExecuteArgs = new List<object> { Clipboard.GetText() },
-                    UndoArgs = new List<object> { PreviousClipboardText }
-                });
+                CopyToClipboard();
             }
             else if (e.ClickedItem.Text == PasteMenuItemName)
             {
@@ -168,6 +160,11 @@ namespace WolfNameCreator
                     UndoCommand(Cmd);
                     UndoneCommands.Push(Cmd);
                 }
+            }
+            // ctrl + c (copy)
+            else if (e.Modifiers == Keys.Control && e.KeyCode == Keys.C)
+            {
+                CopyToClipboard();
             }
             // ctrl + v (paste)
             else if (e.Modifiers == Keys.Control && e.KeyCode == Keys.V)
@@ -419,6 +416,19 @@ namespace WolfNameCreator
                 T = Command.Type.PasteFromClipboard,
                 ExecuteArgs = new List<object> { Clipboard.GetText() },
                 UndoArgs = new List<object> { PreviousText }
+            });
+        }
+
+        void CopyToClipboard()
+        {
+            var PreviousClipboardText = Clipboard.GetText();
+            var Txt = GetFullText();
+            Clipboard.SetText(string.IsNullOrEmpty(Txt) ? " " : Txt);
+            PushUndoableCommand(new Command
+            {
+                T = Command.Type.CopyToClipboard,
+                ExecuteArgs = new List<object> { Clipboard.GetText() },
+                UndoArgs = new List<object> { PreviousClipboardText }
             });
         }
 

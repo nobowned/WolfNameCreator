@@ -29,14 +29,7 @@ namespace WolfNameCreator
                 Parent = this,
                 OnCtrlSKeyed = () =>
                 {
-                    if (SaveToolStripMenuItem.Enabled)
-                    {
-                        SaveToolStripMenuItem.PerformClick();
-                    }
-                    else
-                    {
-                        SaveNewToolStripMenuItem.PerformClick();
-                    }
+                    SaveToolStripMenuItem.PerformClick();
                 }
             };
             Controls.Add(TextField);
@@ -46,8 +39,6 @@ namespace WolfNameCreator
             Height = 120 + MenuStrip.Height;
 
             ParseArguments(args);
-
-            SaveToolStripMenuItem.Enabled = !string.IsNullOrEmpty(ConfigFilePath);
 
             DrawColorCodesCheckBox.CheckedChanged -= DrawColorCodesCheckBox_CheckedChanged;
             DrawColorCodesCheckBox.Checked = TextField.DrawColorCodes;
@@ -183,7 +174,6 @@ namespace WolfNameCreator
                     {
                         TextField.SetText(PlayerName);
                         ConfigFilePath = FileDialog.FileName;
-                        SaveToolStripMenuItem.Enabled = !string.IsNullOrEmpty(ConfigFilePath);
                     }
                 }
             }
@@ -193,6 +183,7 @@ namespace WolfNameCreator
         {
             if (string.IsNullOrEmpty(ConfigFilePath) || !File.Exists(ConfigFilePath))
             {
+                SaveNewToolStripMenuItem.PerformClick();
                 return;
             }
 
@@ -225,7 +216,6 @@ namespace WolfNameCreator
                         {
                             Writer.WriteLine($"set name \"{TextField.GetFullText()}\"");
                             ConfigFilePath = FileDialog.FileName;
-                            SaveToolStripMenuItem.Enabled = !string.IsNullOrEmpty(ConfigFilePath);
                         }
                     }
                 }
