@@ -20,6 +20,7 @@ build/
 [Oo]bj/
 [Dd]ebug_Dedicated/
 [Rr]elease_Dedicated/
+sqlite3/
 
 # MSTest test Results
 [Tt]est[Rr]esult*/
