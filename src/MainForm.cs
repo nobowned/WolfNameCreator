@@ -191,7 +191,7 @@ namespace WolfNameCreator
 
             var Lines = File.ReadAllLines(ConfigFilePath).ToList();
             Lines.RemoveAll(line => line.Contains(NameKey));
-            Lines.Add($"set name \"{TextField.GetFullText()}\"");
+            Lines.Add($"set name \"{TextField.GetText()}\"");
             File.WriteAllLines(ConfigFilePath, Lines.ToArray());
 
             Task.Delay(100).ContinueWith(t => Cursor = Cursors.Default, scheduler: TaskScheduler.FromCurrentSynchronizationContext());
@@ -214,7 +214,7 @@ namespace WolfNameCreator
                     {
                         using (var Writer = new StreamWriter(Stream))
                         {
-                            Writer.WriteLine($"set name \"{TextField.GetFullText()}\"");
+                            Writer.WriteLine($"set name \"{TextField.GetText()}\"");
                             ConfigFilePath = FileDialog.FileName;
                         }
                     }

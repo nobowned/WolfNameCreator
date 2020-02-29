@@ -17,6 +17,8 @@ namespace WolfNameCreator
 
         public int Codepoint;
 
+        public bool IsColorEscape => Codepoint == WolfColorUtil.EscapeCharacter;
+
         Color _color;
         public Color Color
         {
@@ -28,7 +30,7 @@ namespace WolfNameCreator
             {
                 _color = value;
 
-                if (!ColorImageAttributes.ContainsKey(_color))
+                if (!ColorImageAttributes.ContainsKey(_color) && _color != Color.Empty)
                 {
                     InitializeImageAttributesForColor(_color);
                 }

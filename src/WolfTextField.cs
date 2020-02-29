@@ -50,6 +50,29 @@ namespace WolfNameCreator
         bool FocusObtained;
         bool DrawCursor;
         public bool DrawColorCodes { get; private set; } = true;
+        List<Character> ColorlessChars
+        {
+            get
+            {
+                List<Character> Result = null;
+                if (!DrawColorCodes)
+                {
+                    Result = new List<Character>();
+                    for (int i = 0; i < CharsToDraw.Count; ++i)
+                    {
+                        if (CharsToDraw[i].IsColorEscape && (i + 1) < CharsToDraw.Count)
+                        {
+                            i++;
+                        }
+                        else
+                        {
+                            Result.Add(CharsToDraw[i]);
+                        }
+                    }
+                }
+                return Result;
+            }
+        }
 
         public Action OnCtrlSKeyed { get; set; }
 
@@ -119,7 +142,7 @@ namespace WolfNameCreator
             }
 
             int ImgIndex = 0;
-            foreach (var Char in CharsToDraw)
+            foreach (var Char in (DrawColorCodes ? CharsToDraw : ColorlessChars))
             {
                 e.Graphics.DrawImage(Char.Img, new Rectangle((ImgIndex++ * WolfFontHelper.ImageWidth) + 1, 1,
                     Char.Img.Width, Char.Img.Height), 0, 0, Char.Img.Width, Char.Img.Height,
@@ -251,27 +274,6 @@ namespace WolfNameCreator
             return Result;
         }
 
-        public string GetFullText()
-        {
-            var ManuallyColored = false;
-            if (!DrawColorCodes)
-            {
-                DrawColorCodes = true;
-                ApplyDrawColorCodesOptionToCharacters();
-                ManuallyColored = true;
-            }
-
-            var FullText = GetText();
-
-            if (ManuallyColored)
-            {
-                DrawColorCodes = false;
-                ApplyDrawColorCodesOptionToCharacters();
-            }
-
-            return FullText;
-        }
-
         public void SetText(string text)
         {
             CursorPosition = StartingCursorPosition;
@@ -304,8 +306,8 @@ namespace WolfNameCreator
             var PreviousCharacters = new List<Character>(CharsToDraw);
             var PreviousXPosition = CursorPosition.X;
             DrawColorCodes = !DrawColorCodes;
-            ApplyDrawColorCodesOptionToCharacters();
-            CursorPosition = StartingCursorPosition;
+            Enabled = DrawColorCodes;
+            Focus();
             Refresh();
             if (!fromUndoRedoSystem)
             {
@@ -315,53 +317,6 @@ namespace WolfNameCreator
                     ExecuteArgs = new List<object> { DrawColorCodes, CharsToDraw.ToList(), CursorPosition.X },
                     UndoArgs = new List<object> { !DrawColorCodes, PreviousCharacters, PreviousXPosition }
                 });
-            }
-        }
-
-        void ApplyDrawColorCodesOptionToCharacters()
-        {
-            if (DrawColorCodes)
-            {
-                var ColoredCharsToDraw = new List<Character>();
-                for (int Index = CharsToDraw.Count - 1; Index >= 0; --Index)
-                {
-                    ColoredCharsToDraw.Insert(0, CharsToDraw[Index]);
-                    var PreviousIndex = Index - 1;
-                    if ((Index == 0 && CharsToDraw[Index].Color != Color.White) ||
-                        (PreviousIndex >= 0 && CharsToDraw[Index].Color != CharsToDraw[PreviousIndex].Color))
-                    {
-                        var ColorCodepoint = WolfColorUtil.RealColorToCodepoint(CharsToDraw[Index].Color);
-                        ColoredCharsToDraw.Insert(0, new Character
-                        {
-                            Codepoint = ColorCodepoint,
-                            Color = CharsToDraw[Index].Color,
-                            Img = WolfFont[ColorCodepoint]
-                        });
-                        ColoredCharsToDraw.Insert(0, new Character
-                        {
-                            Codepoint = WolfColorUtil.EscapeCharacter,
-                            Color = CharsToDraw[Index].Color,
-                            Img = WolfFont[WolfColorUtil.EscapeCharacter]
-                        });
-                    }
-                }
-                CharsToDraw.Clear();
-                CharsToDraw.AddRange(ColoredCharsToDraw);
-            }
-            else
-            {
-                var ColorlessCharsToDraw = new List<Character>(CharsToDraw);
-                for (int Index = 0; Index < CharsToDraw.Count; ++Index)
-                {
-                    var NextIndex = Index + 1;
-                    if (NextIndex < CharsToDraw.Count && CharsToDraw[Index].Codepoint == WolfColorUtil.EscapeCharacter)
-                    {
-                        ColorlessCharsToDraw.Remove(CharsToDraw[Index]);
-                        ColorlessCharsToDraw.Remove(CharsToDraw[NextIndex]);
-                    }
-                }
-                CharsToDraw.Clear();
-                CharsToDraw.AddRange(ColorlessCharsToDraw);
             }
         }
 
@@ -412,7 +367,7 @@ namespace WolfNameCreator
         public void CopyToClipboard()
         {
             var PreviousClipboardText = Clipboard.GetText();
-            var Txt = GetFullText();
+            var Txt = GetText();
             Clipboard.SetText(string.IsNullOrEmpty(Txt) ? " " : Txt);
             PushUndoableCommand(new Command
             {
@@ -489,8 +444,8 @@ namespace WolfNameCreator
                     break;
                 case Command.Type.ToggleDrawColorCodes:
                     DrawColorCodes = (bool)command.ExecuteArgs[0];
-                    CharsToDraw.Clear();
-                    CharsToDraw.AddRange((List<Character>)command.ExecuteArgs[1]);
+                    Enabled = DrawColorCodes;
+                    Focus();
                     CursorPosition.X = (int)command.ExecuteArgs[2];
                     Refresh();
                     break;
@@ -541,6 +496,8 @@ namespace WolfNameCreator
                     break;
                 case Command.Type.ToggleDrawColorCodes:
                     DrawColorCodes = (bool)command.UndoArgs[0];
+                    Enabled = DrawColorCodes;
+                    Focus();
                     CharsToDraw.Clear();
                     CharsToDraw.AddRange((List<Character>)command.UndoArgs[1]);
                     CursorPosition.X = (int)command.UndoArgs[2];
@@ -639,6 +596,7 @@ namespace WolfNameCreator
             }
 
             var Index = CursorPosition.X / WolfFontHelper.ImageWidth;
+
             CharsToDraw.Insert(Index, character);
 
             UpdateCharacterColors();
@@ -681,10 +639,11 @@ namespace WolfNameCreator
         void UpdateCharacterColors()
         {
             Color CurrentColor = WolfColorUtil.DefaultRealColor;
+
             for (int i = 0; i < CharsToDraw.Count; ++i)
             {
                 var Character = CharsToDraw[i];
-                if (Character.Codepoint == WolfColorUtil.EscapeCharacter)
+                if (Character.IsColorEscape)
                 {
                     var NextIndex = i + 1;
                     if (NextIndex < CharsToDraw.Count)
@@ -704,7 +663,7 @@ namespace WolfNameCreator
         void InvalidateCharacters(int characterIndex)
         {
             var PreviousIndex = characterIndex - 1;
-            if (PreviousIndex >= 0 && CharsToDraw[PreviousIndex].Codepoint == WolfColorUtil.EscapeCharacter)
+            if (PreviousIndex >= 0 && CharsToDraw[PreviousIndex].IsColorEscape)
             {
                 var InvalidatePosition = new Point(CursorPosition.X, CursorPosition.Y);
                 InvalidatePosition.X -= WolfFontHelper.ImageWidth;
@@ -727,6 +686,11 @@ namespace WolfNameCreator
         int GetCharacterIndexFromCursorPosition()
         {
             return CursorPosition.X / WolfFontHelper.ImageWidth;
+        }
+
+        Point GetCursorPositionFromCharacterIndex(int characterIndex)
+        {
+            return new Point(StartingCursorPosition.X + characterIndex * WolfFontHelper.ImageWidth, StartingCursorPosition.Y);
         }
     }
 }
