@@ -109,8 +109,7 @@ namespace WolfNameCreator
             {
                 if (File.Exists(FirstArgument))
                 {
-                    var PlayerName = ParsePlayerNameFromConfigFile(FirstArgument);
-                    if (!string.IsNullOrEmpty(PlayerName))
+                    if (ParsePlayerNameFromConfigFile(FirstArgument, out var PlayerName))
                     {
                         ConfigFilePath = FirstArgument;
                         TextField.SetText(PlayerName);
@@ -123,22 +122,23 @@ namespace WolfNameCreator
             }
         }
 
-        string ParsePlayerNameFromConfigFile(string configFilePath)
+        bool ParsePlayerNameFromConfigFile(string configFilePath, out string name)
         {
+            name = null;
             var ConfigFileContents = File.ReadAllLines(configFilePath);
             if (ConfigFileContents.Length == 0)
             {
-                return null;
+                return false;
             }
 
             var SetNameLine = ConfigFileContents.FirstOrDefault(line => line.Contains(NameKey));
             if (!string.IsNullOrEmpty(SetNameLine))
             {
-                var Name = SetNameLine.Substring(SetNameLine.IndexOf(NameKey) + (NameKey.Length - 1)).Trim(' ', '\n', '\r', '"');
-                return Name;
+                name = SetNameLine.Substring(SetNameLine.IndexOf(NameKey) + (NameKey.Length - 1)).Trim(' ', '\n', '\r', '"');
+                return true;
             }
 
-            return null;
+            return false;
         }
 
         private void PicBox_MouseDown(int codepoint)
@@ -169,8 +169,7 @@ namespace WolfNameCreator
             {
                 if (FileDialog.ShowDialog() == DialogResult.OK)
                 {
-                    var PlayerName = ParsePlayerNameFromConfigFile(FileDialog.FileName);
-                    if (!string.IsNullOrEmpty(PlayerName))
+                    if (ParsePlayerNameFromConfigFile(FileDialog.FileName, out var PlayerName))
                     {
                         TextField.SetText(PlayerName);
                         ConfigFilePath = FileDialog.FileName;
